@@ -4,17 +4,16 @@
 
 package frc.robot.subsystems;
 
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.Constants;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
+
+import org.json.simple.parser.ParseException;
+import org.littletonrobotics.junction.Logger;
 
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.commands.PathPlannerAuto;
@@ -28,41 +27,70 @@ import com.pathplanner.lib.util.DriveFeedforwards;
 import com.pathplanner.lib.util.swerve.SwerveSetpoint;
 import com.pathplanner.lib.util.swerve.SwerveSetpointGenerator;
 
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.Filesystem;
-import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Config;
-import swervelib.parser.SwerveControllerConfiguration;
-import swervelib.parser.SwerveDriveConfiguration;
-import swervelib.parser.SwerveParser;
-import swervelib.telemetry.SwerveDriveTelemetry;
-import swervelib.telemetry.SwerveDriveTelemetry.TelemetryVerbosity;
-import swervelib.SwerveController;
-import swervelib.SwerveDrive;
-import swervelib.SwerveDriveTest;
-import swervelib.SwerveInputStream;
-import swervelib.math.SwerveMath;
-import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
-import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.math.util.Units;
-import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.util.struct.parser.ParseException;
-
+import static edu.wpi.first.units.Units.DegreesPerSecond;
+import static edu.wpi.first.units.Units.Inches;
 import static edu.wpi.first.units.Units.Meter;
+import static edu.wpi.first.units.Units.Meters;
+import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.Radians;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
+import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Config;
+import frc.robot.Constants;
+import limelight.Limelight;
+import limelight.networktables.AngularVelocity3d;
+import limelight.networktables.LimelightPoseEstimator;
+import limelight.networktables.LimelightPoseEstimator.EstimationMode;
+import limelight.networktables.LimelightSettings.ImuMode;
+import limelight.networktables.LimelightSettings.LEDMode;
+import limelight.networktables.Orientation3d;
+import limelight.networktables.PoseEstimate;
+import swervelib.SwerveController;
+import swervelib.SwerveDrive;
+import swervelib.SwerveDriveTest;
+import swervelib.imu.SwerveIMU;
+import swervelib.math.SwerveMath;
+import swervelib.parser.SwerveDriveConfiguration;
+import swervelib.parser.SwerveParser;
+import swervelib.telemetry.SwerveDriveTelemetry;
+import swervelib.telemetry.SwerveDriveTelemetry.TelemetryVerbosity;
+
+import edu.wpi.first.wpilibj.Filesystem;
+import swervelib.parser.SwerveControllerConfiguration;
+
 
 public class SwerveSubsystem extends SubsystemBase {
   /** Creates a new ExampleSubsystem. */
+  private Limelight limelight;
+  private LimelightPoseEstimator poseEstimator;
+  private final boolean IS_LIMELIGHT_ENABLED = true;
 
+  private double distanceToHub = 0.0;
+
+  public double getDistanceToHub() {
+    if (IS_LIMELIGHT_ENABLED) {
+      return distanceToHub;
+    }
+    return 0.0;
+  }
   
   File directory = new File(Filesystem.getDeployDirectory(),"swerve");
-  SwerveDrive  swerveDrive;
+  //SwerveDrive  swerveDrive;
+  private final SwerveDrive swerveDrive;
 
   public SwerveSubsystem() {
     SwerveDriveTelemetry.verbosity = TelemetryVerbosity.HIGH;
@@ -78,14 +106,80 @@ public class SwerveSubsystem extends SubsystemBase {
     {
       throw new RuntimeException(e);
     }
-    swerveDrive.setHeadingCorrection(true);
+    swerveDrive.setHeadingCorrection(false);
 
     swerveDrive.setCosineCompensator(false);
-    
-    swerveDrive.setAngularVelocityCompensation(true, false, 0.1);
-    
+    // Disables cosine compensation for simulations since it causes discrepancies
+    // not seen in real life.
+    swerveDrive.setAngularVelocityCompensation(true, true, 0.1);
+    // Correct for skew that gets worse as angular velocity increases. Start with a
+    // coefficient of 0.1.
     swerveDrive.setModuleEncoderAutoSynchronize(false, 1);
-    
+    // Enable if you want to resynchronize your absolute encoders
+    // and motor encoders periodically when they are not moving.
+
+	// swerveDrive.pushOffsetsToEncoders();
+    // Set the absolute encoder to be used over the internal encoder and push the
+    // offsets onto it. Throws warning if not possible
+
+    // FF values pulled from SysId characterization
+    // replaceSwerveModuleFeedforward(0.268, 2.67, 0.23);
+
+    // swerveDrive.stopOdometryThread(); // TODO: see if this is needed
+
+    // TODO: this lets you actual move the robot
+    // setMotorBrake(false);
+
+	SwerveIMU gyro = swerveDrive.getGyro();
+
+	if (IS_LIMELIGHT_ENABLED) {
+      limelight = new Limelight("limelight");
+      limelight.getSettings()
+          .withLimelightLEDMode(LEDMode.PipelineControl)
+          .withCameraOffset(new Pose3d(
+              Inches.of(-11.00).in(Meters),
+              Inches.of(-9.0).in(Meters),
+              Inches.of(12.75).in(Meters),
+              new Rotation3d(0, Degrees.of(21).in(Radians), Degrees.of(180).in(Radians))))
+          // new Rotation3d(0, 21, 180)))
+          .withImuMode(ImuMode.InternalImuMT1Assist)
+          .withImuAssistAlpha(0.01)
+          .save();
+
+      RobotModeTriggers.disabled().onTrue(Commands.runOnce(() -> {
+        System.out.println("Setting LL IMU Assist Alpha to 0.001");
+
+        limelight.getSettings()
+            // .withImuMode(ImuMode.InternalImuMT1Assist)
+            .withImuAssistAlpha(0.001)
+            .save();
+      }).ignoringDisable(true));
+
+      Command onEnable = Commands.runOnce(() -> {
+        System.out.println("Setting LL IMU Assist Alpha to 0.01");
+
+        limelight.getSettings()
+            // .withImuMode(ImuMode.InternalImuMT1Assist)
+            .withImuAssistAlpha(0.01)
+            .save();
+      });
+
+      RobotModeTriggers.teleop().onTrue(onEnable);
+      RobotModeTriggers.autonomous().onTrue(onEnable);
+      RobotModeTriggers.test().onTrue(onEnable);
+
+      // Required for megatag2 in periodic() function before fetching pose.
+      limelight.getSettings()
+          .withRobotOrientation(
+              new Orientation3d(gyro.getRotation3d(),
+                  new AngularVelocity3d(
+                      DegreesPerSecond.of(0),
+                      DegreesPerSecond.of(0),
+                      DegreesPerSecond.of(0))))
+          .save();
+
+      poseEstimator = limelight.createPoseEstimator(EstimationMode.MEGATAG2);
+    }
     setupPathPlanner();
   }
 
@@ -124,6 +218,42 @@ public class SwerveSubsystem extends SubsystemBase {
   @Override
   public void periodic() {
     // This method will be called once per scheduler run
+	// swerveDrive.updateOdometry(); // TODO: see if this is needed
+
+    if (IS_LIMELIGHT_ENABLED) {
+      // Get MegaTag2 pose
+      Optional<PoseEstimate> visionEstimate = poseEstimator.getPoseEstimate();
+
+      // If the pose is present
+      visionEstimate.ifPresent((PoseEstimate poseEstimate) -> {
+        if (poseEstimate.tagCount > 0) {
+          Logger.recordOutput("Limelight/Megatag2Count", poseEstimate.tagCount);
+
+          Logger.recordOutput("FieldSimulation/LLPose", poseEstimate.pose);
+
+          Pose3d redHub = new Pose3d(
+              Meter.of(11.902),
+              Meter.of(4.031),
+              Meter.of(0.0),
+              new Rotation3d(0, 0, 0));
+
+          distanceToHub = poseEstimate.pose.toPose2d().minus(redHub.toPose2d()).getTranslation().getNorm();
+
+          Logger.recordOutput("FieldSimulation/hubDiff", distanceToHub);
+
+          // Add it to the pose estimator.
+          swerveDrive.addVisionMeasurement(
+              poseEstimate.pose.toPose2d(),
+              poseEstimate.timestampSeconds);
+
+          // TODO: possibly add stddevs here
+          // TODO: Instead of providing the limelight's pose as is, replace the
+          // rotation
+          // component with the current pose rotation so the process doesn't take it into account?
+
+        }
+      });
+    }
   }
 
   @Override
@@ -249,6 +379,20 @@ public class SwerveSubsystem extends SubsystemBase {
 		);
 	}
 
+	public Command driveToPoseCommand(Supplier<Pose2d> poseSupplier) {
+    	// Create the constraints to use while pathfinding
+    	PathConstraints constraints = new PathConstraints(
+        	swerveDrive.getMaximumChassisVelocity(), 4.0,
+        	swerveDrive.getMaximumChassisAngularVelocity(), Units.degreesToRadians(720));
+
+    		// Since AutoBuilder is configured, we can use it to build pathfinding commands
+    	return AutoBuilder.pathfindToPose(
+        	poseSupplier.get(),
+        	constraints,
+        	edu.wpi.first.units.Units.MetersPerSecond.of(0) // Goal end velocity in meters/sec
+    	);
+  	}
+
 	/**
 	 * Drive with {@link SwerveSetpointGenerator} from 254, implemented by
 	 * PathPlanner.
@@ -338,6 +482,25 @@ public class SwerveSubsystem extends SubsystemBase {
 	public Command centerModulesCommand() {
 		return run(() -> Arrays.asList(swerveDrive.getModules())
 				.forEach(it -> it.setAngle(0.0)));
+	}
+
+		/**
+   		* Returns a Command that tells the robot to drive forward until the command
+   		* ends.
+   		*
+   		* @return a Command that tells the robot to drive forward until the command
+   		*         ends
+   		*/
+  	public Command driveForward() {
+		return run(() -> {
+			swerveDrive.drive(new Translation2d(1, 0), 0, false, false);
+		}).finallyDo(() -> swerveDrive.drive(new Translation2d(0, 0), 0, false, false));
+	}
+
+  	public Command driveBackwards() {
+		return run(() -> {
+			swerveDrive.drive(new Translation2d(-1, 0), 0, false, false);
+		}).finallyDo(() -> swerveDrive.drive(new Translation2d(0, 0), 0, false, false));
 	}
 
 	/**
@@ -453,6 +616,7 @@ public class SwerveSubsystem extends SubsystemBase {
 				false); // Open loop is disabled since it shouldn't be used most of the time.
 	}
 
+	
 	/**
 	 * Drive according to the chassis robot oriented velocity.
 	 *
@@ -601,6 +765,9 @@ public class SwerveSubsystem extends SubsystemBase {
 				Constants.MAX_SPEED);
 	}
 
+	public Pose2d getTargetPose() {
+    	return swerveDrive.field.getObject("targetPose").getPose();
+  	}
 	/**
 	 * Gets the current field-relative velocity (x, y and omega) of the robot
 	 *

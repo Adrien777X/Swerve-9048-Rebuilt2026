@@ -8,20 +8,18 @@ import frc.robot.Constants.OperatorConstants;
 import frc.robot.commands.AlignToReefTagRelative;
 import frc.robot.commands.ExampleCommand;
 import frc.robot.subsystems.ExampleSubsystem;
+import frc.robot.subsystems.IntakeSubsystem;
 import frc.robot.subsystems.SwerveSubsystem;
 import frc.robot.subsystems.TurretSubsystem;
-import frc.robot.commands.swervedrive.auto.AutoForward;
-import frc.robot.commands.swervedrive.drivebase.AutoAlignTurret;
+import swervelib.SwerveDrive;
 import swervelib.SwerveInputStream;
+import frc.robot.commands.swervedrive.drivebase.AutoAlignTurret;
+import frc.robot.subsystems.TurretSubsystem;
 
 import java.util.function.DoubleSupplier;
 
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Transform2d;
-import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.wpilibj.DriverStation.Alliance;
-import edu.wpi.first.wpilibj.Filesystem;
+import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -29,13 +27,11 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
-import edu.wpi.first.wpilibj2.command.button.JoystickButton;
+import edu.wpi.first.wpilibj2.command.button.POVButton;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
+import static edu.wpi.first.units.Units.Degrees;
 
 import com.pathplanner.lib.auto.AutoBuilder;
-import com.pathplanner.lib.commands.FollowPathCommand;
-import com.pathplanner.lib.commands.PathPlannerAuto;
-import com.pathplanner.lib.path.PathPlannerPath;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
@@ -44,12 +40,18 @@ import com.pathplanner.lib.path.PathPlannerPath;
  * subsystems, commands, and trigger mappings) should be declared here.
  */
 public class RobotContainer {
+  private boolean isAutoAlignEnabled = false;
+
+  private static final Angle STOW_ANGLE = Degrees.of(0);
+  private static final Angle DEPLOY_ANGLE = Degrees.of(148);
+  private static final Angle HOLD_ANGLE = Degrees.of(115); // Example middle position
   // The robot's subsystems and commands are defined here...
   private final ExampleSubsystem m_exampleSubsystem = new ExampleSubsystem();
   private final SwerveSubsystem drivebase = new SwerveSubsystem();
   private final TurretSubsystem m_turret = new TurretSubsystem();
-  /*private final SendableChooser<Command> m_chooser = new SendableChooser<>();
-  public final SendableChooser<Alliance> allianceChooser = new SendableChooser<>();*/
+  private final IntakeSubsystem m_IntakeSubsystem = new IntakeSubsystem();
+  private final SendableChooser<Command> autoChooser;
+  //public final SendableChooser<Alliance> allianceChooser = new SendableChooser<>();
   DoubleSupplier swerveSpeedScaleTranslation = () -> 1;
 	DoubleSupplier swerveSpeedScaleRotation = () -> 1;
 
@@ -57,12 +59,16 @@ public class RobotContainer {
   private final CommandXboxController m_driverController =
       new CommandXboxController(OperatorConstants.kDriverControllerPort);
   
-  private final Joystick m_operatorController =
-      new Joystick(OperatorConstants.kOperatorControllerPort);
+  private final CommandXboxController m_operatorController =
+      new CommandXboxController(OperatorConstants.kOperatorControllerPort);
 
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public RobotContainer() {
 
+    autoChooser = AutoBuilder.buildAutoChooser();
+    autoChooser.setDefaultOption("Do Nothing", Commands.none());
+    autoChooser.addOption("Drive Forward", drivebase.driveForward().withTimeout(10));
+    SmartDashboard.putData("Auto Chooser", autoChooser);
     /*m_chooser.setDefaultOption(null, driveFieldOrientedAngularVelocity);
     m_chooser.addOption("forward", new AutoForward(drivebase));
     m_chooser.addOption("forward", new AutoForward(drivebase));
@@ -75,6 +81,7 @@ public class RobotContainer {
     //Controller1.back().onTrue(new InstantCommand(() -> drive.setPose(new Pose2d(1.30, 5.55, Rotation2d.fromDegrees(0.0)))));
     // Configure the trigger bindings
     configureBindings();
+    configureDefaultTurretCommand();
     drivebase.setDefaultCommand(driveFieldOrientedAngularVelocity);
     m_turret.setDefaultCommand(
         Commands.run(m_turret::stop, m_turret) // Para a torre (função alpha)
@@ -135,8 +142,48 @@ public class RobotContainer {
 					swerveSpeedScaleRotation = () -> 1;
 				}));
 
+    new Trigger(
+        () -> m_operatorController.getRightTriggerAxis() > 0.1 // Use a small threshold
+    ).whileTrue(m_IntakeSubsystem.intakeCommand());
+
+    new Trigger(
+        () -> m_operatorController.getLeftTriggerAxis() > 0.1 // Use a small threshold
+    ).whileTrue(m_IntakeSubsystem.ejectCommand());
+
+    m_operatorController.povUp().onTrue(m_IntakeSubsystem.setPivotAngle(STOW_ANGLE)); 
+
+    // D-Pad Down (180 degrees POV) moves the intake down (deployed)
+    m_operatorController.povDown().onTrue(m_IntakeSubsystem.setPivotAngle(DEPLOY_ANGLE));
+        
+    // D-Pad Right for a "hold" position
+    m_operatorController.povRight().onTrue(m_IntakeSubsystem.setPivotAngle(HOLD_ANGLE));
+
+    // D-Pad Left to rezero the encoder
+    m_operatorController.povLeft().onTrue(m_IntakeSubsystem.rezero());
+
+    m_operatorController.b().onTrue(m_turret.resetEncoderCommand());
+
+    m_operatorController.a().onTrue(new InstantCommand(() -> {
+            isAutoAlignEnabled = !isAutoAlignEnabled;
+            System.out.println("Turret Auto Align Enabled: " + isAutoAlignEnabled);
+        }));
   }
 
+  private void configureDefaultTurretCommand() {
+    Command manualCmd = m_turret.manualTurretControlCommand(
+        () -> m_driverController.getLeftX() // Supply the X axis value
+    );
+
+    Command autoCmd = new AutoAlignTurret(m_turret);
+
+    m_turret.setDefaultCommand(
+        Commands.either(
+            autoCmd,            // If condition is true (isAutoAlignEnabled)
+            manualCmd,          // If condition is false (manual mode)
+            () -> isAutoAlignEnabled // The condition itself
+        )
+    );
+  }
 
   public void resetEncoderPositions() {
 		drivebase.zeroGyro();
@@ -147,9 +194,16 @@ public class RobotContainer {
    * @return the command to run in autonomous
    */
   public Command getAutonomousCommand() {
-    //return m_chooser.getSelected();
-    return drivebase.getAutonomousCommand("9048");
+    return autoChooser.getSelected();
+    //return drivebase.getAutonomousCommand("9048");
     // An example command will be run in autonomous
     //return Autos.exampleAuto(m_exampleSubsystem);
+  }
+  public SwerveDrive getSwerveDrive() {
+    return drivebase.getSwerveDrive();
+  }
+
+  public Pose2d getRobotPose() {
+    return drivebase.getPose();
   }
 }

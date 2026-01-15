@@ -1,5 +1,7 @@
 package frc.robot.subsystems;
 
+import java.util.function.DoubleSupplier;
+
 import com.revrobotics.PersistMode;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.ResetMode;
@@ -69,5 +71,17 @@ public class TurretSubsystem extends SubsystemBase {
 
     public void manualControl(double speed) {
         m_motor.set(speed * 0.5);
+    }
+    /* ***************************** NEW ************************************/
+    public Command manualTurretControlCommand(DoubleSupplier speedSupplier) {
+        // Runs manually, needs to be bound as a Commands.run() in RobotContainer
+        return Commands.run(() -> manualControl(speedSupplier.getAsDouble()), this);
+    }
+
+    public Command resetEncoderCommand() {
+        return Commands.runOnce(() -> {
+            m_encoder.setPosition(0.0);
+            setGoalAngle(0.0); // Stop movement immediately
+        }, this).withName("Turret.ResetEncoder");
     }
 }

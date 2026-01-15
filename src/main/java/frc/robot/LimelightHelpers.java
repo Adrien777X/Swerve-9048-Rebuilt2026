@@ -1,3 +1,6 @@
+/*ESTAMOS USANDO YALL OU SEJA NÃO PRECISAMOS MAIS DISSO AQUI MAS MELHOR DEIXAR
+ * WE ARE USING YALL AND DON'T NEED THIS ANYMORE, BUT WE WILL LET THIS HERE
+ */
 //LimelightHelpers v1.11 (REQUIRES LLOS 2025.0 OR LATER)
 
 package frc.robot;
@@ -7,8 +10,6 @@ import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.TimestampedDoubleArray;
-import frc.robot.LimelightHelpers.LimelightResults;
-import frc.robot.LimelightHelpers.PoseEstimate;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;

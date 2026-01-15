@@ -4,7 +4,8 @@ import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.Constants.VisionConstants;
-import frc.robot.Utilities.LinearInterpolationTable;
+import frc.robot.util.LinearInterpolationTable;
+
 import java.awt.geom.Point2D;
 
 //Code here is input from 2020 code and modified for photonvision OS on limelight so angles and distances are left in inches

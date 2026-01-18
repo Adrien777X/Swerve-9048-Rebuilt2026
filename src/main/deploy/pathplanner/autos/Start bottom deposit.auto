@@ -7,7 +7,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "Reef - start Mid"
+            "pathName": "hub - start bottom"
           }
         },
         {
@@ -25,7 +25,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "Coral getter - start Mid"
+            "pathName": "ball getter deposit"
           }
         }
       ]

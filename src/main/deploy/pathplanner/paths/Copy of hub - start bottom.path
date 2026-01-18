@@ -3,29 +3,29 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 5.276,
-        "y": 2.941
+        "x": 2.4126296958855096,
+        "y": 4.85438282647585
       },
       "prevControl": null,
       "nextControl": {
-        "x": 4.997692307692307,
-        "y": 2.0125
+        "x": 2.363953488372093,
+        "y": 0.9116100178890871
       },
       "isLocked": false,
-      "linkedName": null
+      "linkedName": "Start top 1 rebuild "
     },
     {
       "anchor": {
-        "x": 1.3960227272727275,
-        "y": 0.8689914772727275
+        "x": 4.619284436493739,
+        "y": 0.603327370304114
       },
       "prevControl": {
-        "x": 3.307124317964834,
-        "y": 1.952313755768158
+        "x": 1.357978533094812,
+        "y": 0.6682289803220027
       },
       "nextControl": null,
       "isLocked": false,
-      "linkedName": null
+      "linkedName": "neutral bottom"
     }
   ],
   "rotationTargets": [],
@@ -33,7 +33,7 @@
   "pointTowardsZones": [],
   "eventMarkers": [],
   "globalConstraints": {
-    "maxVelocity": 3.0,
+    "maxVelocity": 4.572,
     "maxAcceleration": 3.0,
     "maxAngularVelocity": 540.0,
     "maxAngularAcceleration": 720.0,
@@ -42,13 +42,13 @@
   },
   "goalEndState": {
     "velocity": 0,
-    "rotation": -125.07375449334828
+    "rotation": 0.6510603802295067
   },
   "reversed": false,
   "folder": null,
   "idealStartingState": {
     "velocity": 0,
-    "rotation": 120.95709596628843
+    "rotation": 180.0
   },
   "useDefaultConstraints": true
 }

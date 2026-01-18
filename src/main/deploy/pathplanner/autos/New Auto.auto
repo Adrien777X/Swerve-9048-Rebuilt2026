@@ -7,25 +7,19 @@
         {
           "type": "path",
           "data": {
-            "pathName": "Reef - start bottom"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
-            "name": "MoveArmToPosAuto"
-          }
-        },
-        {
-          "type": "wait",
-          "data": {
-            "waitTime": 4.5
+            "pathName": "hub - start Top neutral"
           }
         },
         {
           "type": "path",
           "data": {
-            "pathName": "Coral getter - start bottom"
+            "pathName": "Copy of hub - start Top neutral"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "ball getter neutral top"
           }
         }
       ]

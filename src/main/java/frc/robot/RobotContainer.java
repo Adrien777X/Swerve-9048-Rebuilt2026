@@ -5,16 +5,12 @@
 package frc.robot;
 
 import frc.robot.Constants.OperatorConstants;
-import frc.robot.commands.AlignToReefTagRelative;
 import frc.robot.commands.ExampleCommand;
 import frc.robot.subsystems.ExampleSubsystem;
 import frc.robot.subsystems.IntakeSubsystem;
 import frc.robot.subsystems.SwerveSubsystem;
-import frc.robot.subsystems.TurretSubsystem;
 import swervelib.SwerveDrive;
 import swervelib.SwerveInputStream;
-import frc.robot.commands.swervedrive.drivebase.AutoAlignTurret;
-import frc.robot.subsystems.TurretSubsystem;
 
 import java.util.function.DoubleSupplier;
 
@@ -48,7 +44,6 @@ public class RobotContainer {
   // The robot's subsystems and commands are defined here...
   private final ExampleSubsystem m_exampleSubsystem = new ExampleSubsystem();
   private final SwerveSubsystem drivebase = new SwerveSubsystem();
-  private final TurretSubsystem m_turret = new TurretSubsystem();
   private final IntakeSubsystem m_IntakeSubsystem = new IntakeSubsystem();
   private final SendableChooser<Command> autoChooser;
   //public final SendableChooser<Alliance> allianceChooser = new SendableChooser<>();
@@ -81,11 +76,10 @@ public class RobotContainer {
     //Controller1.back().onTrue(new InstantCommand(() -> drive.setPose(new Pose2d(1.30, 5.55, Rotation2d.fromDegrees(0.0)))));
     // Configure the trigger bindings
     configureBindings();
-    configureDefaultTurretCommand();
     drivebase.setDefaultCommand(driveFieldOrientedAngularVelocity);
-    m_turret.setDefaultCommand(
-        Commands.run(m_turret::stop, m_turret) // Para a torre (função alpha)
-    );
+    //m_turret.setDefaultCommand(
+    //    Commands.run(m_turret::stop, m_turret) // Para a torre (função alpha)
+    //);
   }
   
 
@@ -129,10 +123,6 @@ public class RobotContainer {
     
     m_driverController.povUp().onTrue((Commands.runOnce(()->drivebase.zeroGyro(), drivebase)));
 
-
-    m_driverController.povRight().onTrue(new AlignToReefTagRelative(true, drivebase).withTimeout(5));
-    m_driverController.povLeft().onTrue(new AlignToReefTagRelative(false, drivebase).withTimeout(5));
-
     m_driverController.leftTrigger().onTrue(new InstantCommand(() -> {
 			swerveSpeedScaleTranslation = () -> 0.3;
 			swerveSpeedScaleRotation = () -> 0.2;
@@ -161,28 +151,10 @@ public class RobotContainer {
     // D-Pad Left to rezero the encoder
     m_operatorController.povLeft().onTrue(m_IntakeSubsystem.rezero());
 
-    m_operatorController.b().onTrue(m_turret.resetEncoderCommand());
-
     m_operatorController.a().onTrue(new InstantCommand(() -> {
             isAutoAlignEnabled = !isAutoAlignEnabled;
             System.out.println("Turret Auto Align Enabled: " + isAutoAlignEnabled);
         }));
-  }
-
-  private void configureDefaultTurretCommand() {
-    Command manualCmd = m_turret.manualTurretControlCommand(
-        () -> m_driverController.getLeftX() // Supply the X axis value
-    );
-
-    Command autoCmd = new AutoAlignTurret(m_turret);
-
-    m_turret.setDefaultCommand(
-        Commands.either(
-            autoCmd,            // If condition is true (isAutoAlignEnabled)
-            manualCmd,          // If condition is false (manual mode)
-            () -> isAutoAlignEnabled // The condition itself
-        )
-    );
   }
 
   public void resetEncoderPositions() {

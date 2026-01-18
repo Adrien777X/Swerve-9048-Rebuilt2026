@@ -7,6 +7,10 @@ package frc.robot;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.util.Units;
 import swervelib.math.Matter;
+import edu.wpi.first.wpilibj.RobotBase;
+import frc.robot.util.LinearInterpolationTable;
+
+import java.awt.geom.Point2D;
 
 /**
  * The Constants class provides a convenient place for teams to hold robot-wide numerical or boolean
@@ -32,6 +36,98 @@ public final class Constants {
     public static final double TURN_CONSTANT = 6;
   }
 
+  public static class DriveConstants {
+    public static final double kInnerDeadband = 0.10;
+    public static final double kOuterDeadband = 0.98;
+
+    public static final double kMaxSpeedMetersPerSecond = 3.25; // Maximum Sustainable Drivetrain Speed under Normal
+                                                                // Conditions & Battery, Robot will not exceed this
+                                                                // speed in closed loop control
+    public static final double kMaxAngularSpeed = Math.PI; // Maximum Angular Speed desired. NOTE: Robot can exceed this
+                                                           // but spinning fast is not particularly useful or driver
+                                                           // friendly
+    public static final double kMaxAngularAccel = Math.PI; // Maximum Angular Speed desired. NOTE: Robot can exceed this
+                                                           // but spinning fast is not particularly useful or driver
+                                                           // friendly
+    // Minimum allowable rotation command (in radians/s) assuming user input is
+    // squared using quadraticTransform, this value is always positive and should be
+    // compared agaisnt the absolute value of the drive command
+    public static final double kMinRotationCommand = DriveConstants.kMaxAngularSpeed
+        * Math.pow(DriveConstants.kInnerDeadband, 2);
+    // Minimum allowable tranlsation command (in m/s) assuming user input is squared
+    // using quadraticTransform, this value is always positive and should be
+    // compared agaisnt the absolute value of the drive command
+    public static final double kMinTranslationCommand = DriveConstants.kMaxSpeedMetersPerSecond
+        * Math.pow(DriveConstants.kInnerDeadband, 2);
+  }
+
+  public static final class TurretConstants {
+    public static final int kIDVortex = 31;
+    public static final double kmaxminAngle = 120;
+    public static final double kMotorToEncoderRatio = 3.0;
+    public static final double kEncoderGearToTurretGearRatio = 6.296; //170.0 / 27.0
+    public static final double TotalReduction = kMotorToEncoderRatio * kEncoderGearToTurretGearRatio;
+    public static final double kTolerance = 2 * 0.0349; // allowable angle error in radians for the PIDSubsystem to
+                                                        // report atSetpoint() to true
+    public static final double kLow = 0.383; // Minimum angle in radians allowed (defines the turret deadzone)
+    public static final double kHigh = 5.90; // Maximum angle in radians allowed (defines the turret deadzone)
+    public static final double kAccel = 15000;
+    public static final double kMaxVel = 5000;
+    public static final double kMotionTol = 0.2;
+    public static final double kRatio = 0.0171875;
+    public static final double kStartingPositionDegrees = 180.0;
+    public static final float kLowLimit = (float) (kLow / kRatio / 2.0 / Math.PI - 1.0);
+    public static final float kHighLimit = (float) (kHigh / kRatio / 2.0 / Math.PI + 1.0);
+    public static final double kNearDeadzone = 0.20;
+  }
+
+  public static final class ShooterConstants {
+    public static final int[] kMotorIDs = { 12, 13 }; // CANID of the Motor Controller for the Sooter Motor
+    public static final double kRPMTolerance = 200.0; // RPMs of error allowed before a ball can be fed into t he
+                                                      // shooter
+    public static final double[] kPID = { 0.0001, 0.0005, 0 }; // Defines PID values for the shooter 0.00045
+    public static final double kIntRange = 0.015;
+    public static final double kStatic = 0.018;
+    public static final double kFF = 0.00016;
+    public static final double kAccelCompFactor = 0.100; // in units of seconds
+    public static final double kMaxRPM = 3600.0;
+    public static final double kMaxNegPower = -0.30;
+
+    public static final double kHangarRPM = 1200;
+    private static final Point2D[] kRPMPoints = new Point2D.Double[] {
+        // (ty-angle,distance)
+        new Point2D.Double(35, 1500+10),
+        new Point2D.Double(55, 1860+10),
+        new Point2D.Double(80, 2000+10), //
+        new Point2D.Double(105, 2100+10), //
+        new Point2D.Double(130, 2170+20), //
+        new Point2D.Double(155, 2245+30), //
+        new Point2D.Double(165, 2380), //
+        new Point2D.Double(180, 2465+30), //
+        new Point2D.Double(205, 2670+30), //
+        new Point2D.Double(230, 2840+35), //
+        new Point2D.Double(255, 2980+40), //
+        new Point2D.Double(270, 3300), //
+        new Point2D.Double(280, 3350+60)
+
+    };
+
+    public static final LinearInterpolationTable kRPMTable = new LinearInterpolationTable(kRPMPoints);
+
+    private static final Point2D[] kShotTimes = new Point2D.Double[] {
+        // (ty-angle,time)
+        new Point2D.Double(80, 0.78),
+        new Point2D.Double(130, 0.80),
+        new Point2D.Double(190, 0.81),
+        new Point2D.Double(240, 0.82),
+        new Point2D.Double(280, 0.83)
+    };
+
+    public static final LinearInterpolationTable kTimeTable = new LinearInterpolationTable(kShotTimes);
+
+
+
+  }
   // Auto constants
   public static final double MAX_ALIGN_TRANSLATION_SPEED = 0.8; // m/s
   public static final double MAX_ALIGN_ROTATION_SPEED = 1.5;    // rad/s

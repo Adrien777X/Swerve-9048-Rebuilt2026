@@ -11,6 +11,7 @@ import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.DegreesPerSecond;
 import static edu.wpi.first.units.Units.DegreesPerSecondPerSecond;
 import static edu.wpi.first.units.Units.Feet;
+import static edu.wpi.first.units.Units.Grams;
 import static edu.wpi.first.units.Units.Inches;
 import static edu.wpi.first.units.Units.Pounds;
 import static edu.wpi.first.units.Units.RPM;
@@ -53,11 +54,11 @@ public class IntakeSubsystem extends SubsystemBase {
       .withStatorCurrentLimit(Amps.of(40))
       .withFollowers(Pair.of(new SparkMax(Constants.IntakeConstants.kRollerMotorIdFollower, MotorType.kBrushless), false));
 
-    private final SmartMotorController smc = new SparkWrapper(m_rollerLeader, DCMotor.getNeo550(1), smcConfig);
+    private final SmartMotorController smc = new SparkWrapper(m_rollerLeader, DCMotor.getNeo550(2), smcConfig);
 
     private final FlyWheelConfig intakeConfig = new FlyWheelConfig(smc)
-      .withDiameter(Inches.of(4))
-      .withMass(Pounds.of(0.5))
+      .withDiameter(Inches.of(2))
+      .withMass(Grams.of(2229))
       .withUpperSoftLimit(RPM.of(11000))
       .withLowerSoftLimit(RPM.of(-11000))
       .withTelemetry("IntakeRoller", TelemetryVerbosity.HIGH);

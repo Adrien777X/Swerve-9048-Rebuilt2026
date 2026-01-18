@@ -7,7 +7,6 @@ package frc.robot;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.util.Units;
 import swervelib.math.Matter;
-import edu.wpi.first.wpilibj.RobotBase;
 import frc.robot.util.LinearInterpolationTable;
 
 import java.awt.geom.Point2D;

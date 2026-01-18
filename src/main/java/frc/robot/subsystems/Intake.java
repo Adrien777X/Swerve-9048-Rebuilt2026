@@ -40,7 +40,7 @@ import yams.motorcontrollers.SmartMotorControllerConfig.TelemetryVerbosity;
 import yams.motorcontrollers.local.SparkWrapper;
 import frc.robot.Constants;
 
-public class IntakeSubsystem extends SubsystemBase {
+public class Intake extends SubsystemBase {
     private static final double INTAKE_SPEED = 1.0;
 
     private final SparkMax m_rollerLeader  = new SparkMax(Constants.IntakeConstants.kRollerMotorIdLeader, MotorType.kBrushless);
@@ -90,7 +90,7 @@ public class IntakeSubsystem extends SubsystemBase {
 
     private Arm intakePivot = new Arm(intakePivotConfig);
 
-    public IntakeSubsystem() {
+    public Intake() {
       pivotMotor.configure(null, SparkBase.ResetMode.kResetSafeParameters, SparkBase.PersistMode.kPersistParameters);
       m_rollerLeader.configure(null, SparkBase.ResetMode.kResetSafeParameters, SparkBase.PersistMode.kPersistParameters);
     }

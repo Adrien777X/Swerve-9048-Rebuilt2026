@@ -60,6 +60,20 @@ public final class Constants {
         * Math.pow(DriveConstants.kInnerDeadband, 2);
   }
 
+  public static final class IntakeConstants {
+    public static int kRollerMotorIdLeader = 30;
+    public static int kRollerMotorIdFollower = 31;
+    public static int kPivotMotorId = 32;
+  }
+
+  public static class HopperConstants {
+    public static final int kHopperMotorId = 40;
+  }
+
+  public static class KickerConstants {
+    public static final int kKickerMotorId = 50;
+  }
+
   public static final class TurretConstants {
     public static final int kIDVortex = 31;
     public static final double kmaxminAngle = 120;
@@ -123,9 +137,6 @@ public final class Constants {
     };
 
     public static final LinearInterpolationTable kTimeTable = new LinearInterpolationTable(kShotTimes);
-
-
-
   }
   // Auto constants
   public static final double MAX_ALIGN_TRANSLATION_SPEED = 0.8; // m/s
@@ -144,12 +155,6 @@ public final class Constants {
 
 	public static final double DONT_SEE_TAG_WAIT_TIME = 1;
 	public static final double POSE_VALIDATION_TIME = 0.3;
-
-  public static final class IntakeConstants {
-    public static int kRollerMotorIdLeader = 30;
-    public static int kRollerMotorIdFollower = 31;
-    public static int kPivotMotorId = 32;
-  }
 
   public static final class VisionConstants {
     public static final double kElevationOffset = 38.5; //degree offset of lens from horizontal due to camera mount

@@ -154,6 +154,10 @@ public class Turret extends SubsystemBase {
     return turret.set(dutyCycle);
   }
 
+  public void stop() {
+    m_motor.stopMotor();
+  }
+
   public Command sysId() {
     return turret.sysId(Volts.of(7), Volts.of(2).per(Second), Seconds.of(10));
   }

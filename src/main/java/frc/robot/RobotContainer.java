@@ -5,8 +5,13 @@
 package frc.robot;
 
 import frc.robot.Constants.OperatorConstants;
+import frc.robot.subsystems.Hopper;
 import frc.robot.subsystems.Intake;
+import frc.robot.subsystems.Kicker;
+import frc.robot.subsystems.Shooter;
+import frc.robot.subsystems.Superstructure;
 import frc.robot.subsystems.SwerveSubsystem;
+import frc.robot.subsystems.Turret;
 import swervelib.SwerveDrive;
 import swervelib.SwerveInputStream;
 
@@ -39,6 +44,13 @@ public class RobotContainer {
   private static final Angle HOLD_ANGLE = Degrees.of(115); // Example middle position
   // The robot's subsystems and commands are defined here...
   private final SwerveSubsystem drivebase = new SwerveSubsystem();
+  private final Turret turret = new Turret();
+  private final Intake intake = new Intake();
+  private final Hopper hopper = new Hopper();
+  private final Kicker kicker = new Kicker();
+  private final Shooter shooter = new Shooter();
+
+  private final Superstructure superstructure = new Superstructure(shooter, turret, intake, hopper, kicker);
   private final Intake m_IntakeSubsystem = new Intake();
   private final SendableChooser<Command> autoChooser;
   //public final SendableChooser<Alliance> allianceChooser = new SendableChooser<>();
@@ -145,6 +157,10 @@ public class RobotContainer {
 
     // D-Pad Left to rezero the encoder
     m_operatorController.povLeft().onTrue(m_IntakeSubsystem.rezero());
+
+    m_operatorController.a().whileTrue(
+        superstructure.feedAllCommand()
+            .finallyDo(() -> superstructure.stopFeedingAllCommand().schedule()));
 
     m_operatorController.a().onTrue(new InstantCommand(() -> {
             isAutoAlignEnabled = !isAutoAlignEnabled;

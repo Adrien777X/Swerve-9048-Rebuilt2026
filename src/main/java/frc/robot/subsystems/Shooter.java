@@ -8,13 +8,17 @@ import static edu.wpi.first.units.Units.Inches;
 import static edu.wpi.first.units.Units.Pounds;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
 
+import java.util.Map;
+
 import com.revrobotics.RelativeEncoder;
 
 import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
+import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.ShooterConstants;
 import yams.gearing.GearBox;
@@ -36,6 +40,8 @@ public class Shooter extends SubsystemBase {
     private final PIDController m_PID = new PIDController(ShooterConstants.kPID[0], ShooterConstants.kPID[1],
             ShooterConstants.kPID[2]);
     private SimpleMotorFeedforward m_FF = new SimpleMotorFeedforward(ShooterConstants.kStatic, ShooterConstants.kFF);
+
+    private double temp_distance = 0.0;
 
     private double m_RPM = ShooterConstants.kMaxRPM;
 
@@ -89,8 +95,16 @@ public class Shooter extends SubsystemBase {
         shooter.setSpeed(RotationsPerSecond.of(rpm / 60.0));
     }
 
-    public void stop() {
-        shooter.setSpeed(RotationsPerSecond.of(0));
+    public Command shootAtDistance(double distanceMeters) {
+        return run(() -> {
+        temp_distance = SHOOTING_SPEED_BY_DISTANCE.get(distanceMeters);
+
+        shooter.setSpeed(RotationsPerSecond.of(temp_distance));
+        });
+    }
+
+    public Command stop() {
+        return shooter.setSpeed(RotationsPerSecond.of(0));
     }
 
     @Override
@@ -104,4 +118,9 @@ public class Shooter extends SubsystemBase {
     public boolean atSetpoint() {
         return m_PID.atSetpoint();
     }
+    // m / rps
+    private static final InterpolatingDoubleTreeMap SHOOTING_SPEED_BY_DISTANCE = InterpolatingDoubleTreeMap.ofEntries(
+      Map.entry(2.63, 0.55),
+      Map.entry(3.4, 0.6),
+      Map.entry(4.83, 0.69));
 }

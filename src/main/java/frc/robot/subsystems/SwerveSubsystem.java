@@ -15,6 +15,8 @@ import java.util.function.Supplier;
 import org.json.simple.parser.ParseException;
 import org.littletonrobotics.junction.Logger;
 
+import com.ctre.phoenix.sensors.PigeonIMU;
+import com.ctre.phoenix6.hardware.Pigeon2;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.commands.PathPlannerAuto;
 import com.pathplanner.lib.commands.PathfindingCommand;
@@ -51,6 +53,9 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Config;
 import frc.robot.Constants;
+import frc.robot.Constants.GlobalConstants;
+import frc.robot.util.FieldRelativeAccel;
+import frc.robot.util.FieldRelativeSpeed;
 import limelight.Limelight;
 import limelight.networktables.AngularVelocity3d;
 import limelight.networktables.LimelightPoseEstimator;
@@ -62,6 +67,7 @@ import limelight.networktables.PoseEstimate;
 import swervelib.SwerveController;
 import swervelib.SwerveDrive;
 import swervelib.SwerveDriveTest;
+import swervelib.imu.Pigeon2Swerve;
 import swervelib.imu.SwerveIMU;
 import swervelib.math.SwerveMath;
 import swervelib.parser.SwerveDriveConfiguration;
@@ -80,6 +86,10 @@ public class SwerveSubsystem extends SubsystemBase {
   private final boolean IS_LIMELIGHT_ENABLED = true;
 
   private double distanceToHub = 0.0;
+  private double keepAngle = 0.0;
+  private FieldRelativeSpeed m_fieldRelVel = new FieldRelativeSpeed();
+  private FieldRelativeSpeed m_lastFieldRelVel = new FieldRelativeSpeed();
+  private FieldRelativeAccel m_fieldRelAccel = new FieldRelativeAccel();;
 
   public double getDistanceToHub() {
     if (IS_LIMELIGHT_ENABLED) {
@@ -217,7 +227,9 @@ public class SwerveSubsystem extends SubsystemBase {
 
   @Override
   public void periodic() {
-	
+	m_fieldRelVel = new FieldRelativeSpeed(getRobotVelocity(), getHeading());
+    m_fieldRelAccel = new FieldRelativeAccel(m_fieldRelVel, m_lastFieldRelVel, GlobalConstants.kLoopTime);
+    m_lastFieldRelVel = m_fieldRelVel;
     // This method will be called once per scheduler run
 	// swerveDrive.updateOdometry(); // TODO: see if this is needed
 
@@ -256,6 +268,46 @@ public class SwerveSubsystem extends SubsystemBase {
       });
     }
   }
+
+  /* This is AI BULLSHIT
+  public FieldRelativeSpeed getFieldRelativeSpeed() {
+	// 1. Get the robot's current estimated velocity relative to itself (Robot Relative) 
+    ChassisSpeeds robotRelSpeeds = swerveDrive.getRobotVelocity();
+        
+    // 2. Get the current field heading (using the corrected YAGSL method)
+    Rotation2d fieldHeading = swerveDrive.getOdometryHeading();
+        
+    // 3. Use your custom class constructor to convert to Field Relative
+    return new FieldRelativeSpeed(robotRelSpeeds, fieldHeading);
+  }
+
+  public FieldRelativeAccel getFieldRelativeAccel() {
+	return new FieldRelativeAccel(); 
+    //To implement this properly, you need state tracking:
+    /*FieldRelativeSpeed currentSpeed = getFieldRelativeSpeed();
+    double dt = Timer.getFPGATimestamp() - lastTimestamp;
+    FieldRelativeAccel accel = new FieldRelativeAccel(currentSpeed, lastSpeed, dt);
+    lastSpeed = currentSpeed;
+    lastTimestamp = Timer.getFPGATimestamp();
+    return accel;
+  }*/
+
+  public FieldRelativeSpeed getFieldRelativeSpeed() {
+    return m_fieldRelVel;
+  }
+
+  public FieldRelativeAccel getFieldRelativeAccel() {
+    return m_fieldRelAccel;
+  }
+
+  public Rotation2d getGyro() {
+    return getGyro();
+  }
+
+   public void setPose(Pose2d pose) {
+    resetOdometry(pose);
+    keepAngle = getGyro().getRadians(); 
+   }
 
   @Override
   public void simulationPeriodic() {

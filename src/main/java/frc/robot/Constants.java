@@ -4,6 +4,7 @@
 
 package frc.robot;
 
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.util.Units;
 import swervelib.math.Matter;
@@ -25,6 +26,13 @@ public final class Constants {
   public static final Matter CHASSIS = new Matter(new Translation3d(0, 0, Units.inchesToMeters(11.2)), ROBOT_MASS);
   public static final double LOOP_TIME = 0.13;
   public static final double MAX_SPEED = Units.feetToMeters(15);
+
+  public static final class GoalConstants {
+    public static final Translation2d kGoalLocation = new Translation2d(4.115, 4.115);
+    public static final Translation2d kWrongBallGoal = new Translation2d(3.00, 4.115);
+    //public static final Translation2d kHangerLocation = new Translation2d(2.00, 6.00);
+
+  }
 
   public static class OperatorConstants {
     public static final int kDriverControllerPort = 0;

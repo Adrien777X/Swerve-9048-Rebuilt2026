@@ -34,6 +34,13 @@ public final class Constants {
 
   }
 
+  public static final class GlobalConstants {
+    public static final double kVoltCompensation = 12.6; // Sets a voltage compensation value ideally 12.6V
+    public static final int PCHID = 20;
+    public static final int PDHID = 24;
+    public static final double kLoopTime = 0.020;
+  }
+
   public static class OperatorConstants {
     public static final int kDriverControllerPort = 0;
     public static final int kOperatorControllerPort = 1;

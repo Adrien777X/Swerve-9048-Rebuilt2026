@@ -25,7 +25,6 @@ public class SmartShooter extends Command {
     private final SwerveSubsystem m_drive;
     private final boolean m_updatePose;
     private final XboxController m_driver;
-    private double m_wrongBallTime;
     private final Timer m_timer = new Timer();
 
     private static LinearInterpolationTable m_timeTable = ShooterConstants.kTimeTable;
@@ -57,7 +56,6 @@ public class SmartShooter extends Command {
         SmartDashboard.putNumber("SetHoodAdjust", 0.0);
         SmartDashboard.putNumber("SetShotAdjust", 0);
         SmartDashboard.putBoolean("Adjust Shot?", false);
-        m_wrongBallTime = Double.NEGATIVE_INFINITY;
     }
 
     @Override
@@ -73,10 +71,6 @@ public class SmartShooter extends Command {
         FieldRelativeAccel robotAccel = m_drive.getFieldRelativeAccel();
 
         Translation2d target = GoalConstants.kGoalLocation;
-
-        if (currentTime <= m_wrongBallTime + 0.100) {
-            target = GoalConstants.kWrongBallGoal;
-        }
 
         Translation2d robotToGoal = target.minus(m_drive.getPose().getTranslation());
         double dist = robotToGoal.getDistance(new Translation2d()) * 39.37;

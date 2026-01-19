@@ -5,6 +5,8 @@
 package frc.robot;
 
 import frc.robot.Constants.OperatorConstants;
+import frc.robot.Constants.ShooterConstants;
+import frc.robot.commands.TurretedShooter.SmartShooter;
 import frc.robot.subsystems.Hopper;
 import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.Kicker;
@@ -19,12 +21,14 @@ import java.util.function.DoubleSupplier;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import static edu.wpi.first.units.Units.Degrees;
 
@@ -37,46 +41,43 @@ import com.pathplanner.lib.auto.AutoBuilder;
  * subsystems, commands, and trigger mappings) should be declared here.
  */
 public class RobotContainer {
-  private boolean isAutoAlignEnabled = false;
+  Command chosenAuto;
 
   private static final Angle STOW_ANGLE = Degrees.of(0);
   private static final Angle DEPLOY_ANGLE = Degrees.of(148);
   private static final Angle HOLD_ANGLE = Degrees.of(115); // Example middle position
-  // The robot's subsystems and commands are defined here...
+
   private final SwerveSubsystem drivebase = new SwerveSubsystem();
-  private final Turret turret = new Turret();
-  private final Intake intake = new Intake();
+  private final Turret m_turret = new Turret();
   private final Hopper hopper = new Hopper();
   private final Kicker kicker = new Kicker();
-  private final Shooter shooter = new Shooter();
-
-  private final Superstructure superstructure = new Superstructure(shooter, turret, intake, hopper, kicker);
+  private final Shooter m_shooter = new Shooter();
   private final Intake m_IntakeSubsystem = new Intake();
+  
   private final SendableChooser<Command> autoChooser;
-  //public final SendableChooser<Alliance> allianceChooser = new SendableChooser<>();
+
   DoubleSupplier swerveSpeedScaleTranslation = () -> 1;
 	DoubleSupplier swerveSpeedScaleRotation = () -> 1;
 
-  // Replace with CommandPS4Controller or CommandJoystick if needed
   private final CommandXboxController m_driverController =
       new CommandXboxController(OperatorConstants.kDriverControllerPort);
   
   private final CommandXboxController m_operatorController =
       new CommandXboxController(OperatorConstants.kOperatorControllerPort);
 
+  //private final SmartIntake m_runIntakes = new SmartIntake(m_IntakeSubsystem, drivebase, m_driverController);
+  private final SmartShooter m_moveShoot = new SmartShooter(m_shooter, m_turret, drivebase);
+
+  private final Superstructure superstructure = new Superstructure(m_shooter, m_turret, m_IntakeSubsystem, hopper, kicker);
+
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public RobotContainer() {
 
     autoChooser = AutoBuilder.buildAutoChooser();
     autoChooser.setDefaultOption("Do Nothing", Commands.none());
-    autoChooser.addOption("Drive Forward", drivebase.driveForward().withTimeout(10));
-    SmartDashboard.putData("Auto Chooser", autoChooser);
-    /*m_chooser.setDefaultOption(null, driveFieldOrientedAngularVelocity);
-    m_chooser.addOption("forward", new AutoForward(drivebase));
-    m_chooser.addOption("forward", new AutoForward(drivebase));
-    SmartDashboard.putData("Auto Chooser", m_chooser);
-    
-    allianceChooser.setDefaultOption("blue", Alliance.Blue);
+    autoChooser.addOption("Drive Forward", drivebase.driveForward().withTimeout(3));
+    SmartDashboard.putData("Choose Auto", autoChooser);
+    /*allianceChooser.setDefaultOption("blue", Alliance.Blue);
     allianceChooser.addOption("red", Alliance.Red);
     SmartDashboard.putData("Alliance Chooser", allianceChooser);*/
     //resetar ODOMETriA Teste NãO AtIVaR
@@ -162,10 +163,8 @@ public class RobotContainer {
         superstructure.feedAllCommand()
             .finallyDo(() -> superstructure.stopFeedingAllCommand().schedule()));
 
-    m_operatorController.a().onTrue(new InstantCommand(() -> {
-            isAutoAlignEnabled = !isAutoAlignEnabled;
-            System.out.println("Turret Auto Align Enabled: " + isAutoAlignEnabled);
-        }));
+    m_operatorController.x().onTrue(m_moveShoot);
+    m_operatorController.y().onTrue(new InstantCommand(() -> m_moveShoot.cancel()));
   }
 
   public void resetEncoderPositions() {
@@ -177,6 +176,7 @@ public class RobotContainer {
    * @return the command to run in autonomous
    */
   public Command getAutonomousCommand() {
+    chosenAuto = autoChooser.getSelected();
     return autoChooser.getSelected();
     //return drivebase.getAutonomousCommand("9048");
     // An example command will be run in autonomous

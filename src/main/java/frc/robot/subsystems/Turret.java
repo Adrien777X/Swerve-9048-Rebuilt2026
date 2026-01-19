@@ -22,7 +22,6 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.TurretConstants;
-import frc.robot.Constants.VisionConstants;
 import frc.robot.util.MathUtils;
 import yams.gearing.GearBox;
 import yams.gearing.MechanismGearing;
@@ -95,7 +94,7 @@ public class Turret extends SubsystemBase {
     SmartDashboard.putNumber("Turret Set Angle", angleRad);
 
     if (aimAtVision && Limelight.valid()) {
-      angleRad -= Limelight.tx();
+      angleRad -= Limelight.tx(); // possible change in future angleRad -= Math.toRadians(Limelight.tx());
     }
 
     angleRad = MathUtil.clamp(angleRad, TurretConstants.kLow, TurretConstants.kHigh);
@@ -121,13 +120,13 @@ public class Turret extends SubsystemBase {
     m_trackTarget = track;
   }
 
-  public boolean visionAligned() {
+  /*public boolean visionAligned() {
     if (Limelight.valid() && Math.abs(Limelight.tx()) < VisionConstants.kTrackTolerance) {
       return true;
     } else {
       return false;
     }
-  }
+  }*/
 
   public boolean atDesiredAngle() {
     return Math.abs(m_desiredAngleRad - turret.getAngle().in(Radians)) <= TurretConstants.kTolerance;
@@ -163,7 +162,7 @@ public class Turret extends SubsystemBase {
   }
 
   public void setToStartPosition() {
-    m_desiredAngleRad = TurretConstants.kStartingPositionDegrees;
+    m_desiredAngleRad = Math.toRadians(TurretConstants.kStartingPositionDegrees);
     turret.setAngle(Degrees.of(TurretConstants.kStartingPositionDegrees));
   }
 

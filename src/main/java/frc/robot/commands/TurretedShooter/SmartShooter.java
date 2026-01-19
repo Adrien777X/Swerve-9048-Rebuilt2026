@@ -1,21 +1,17 @@
 package frc.robot.commands.TurretedShooter;
 
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Constants.GoalConstants;
 import frc.robot.Constants.ShooterConstants;
 import frc.robot.util.FieldRelativeAccel;
 import frc.robot.util.FieldRelativeSpeed;
 import frc.robot.util.LinearInterpolationTable;
 import frc.robot.subsystems.SwerveSubsystem;
-import frc.robot.subsystems.Limelight;
 import frc.robot.subsystems.Shooter;
 import frc.robot.subsystems.Turret;
 
@@ -23,27 +19,27 @@ public class SmartShooter extends Command {
     private final Shooter m_shooter;
     private final Turret m_turret;
     private final SwerveSubsystem m_drive;
-    private final boolean m_updatePose;
+    //private final boolean m_updatePose;
     private final XboxController m_driver;
     private final Timer m_timer = new Timer();
 
     private static LinearInterpolationTable m_timeTable = ShooterConstants.kTimeTable;
     private static LinearInterpolationTable m_rpmTable = ShooterConstants.kRPMTable;
 
-    public SmartShooter(Shooter shooter, Turret turret, SwerveSubsystem drive, boolean updatePose, XboxController driver) {
+    public SmartShooter(Shooter shooter, Turret turret, SwerveSubsystem drive, XboxController driver) {
         m_shooter = shooter;
         m_turret = turret;
         m_drive = drive;
-        m_updatePose = updatePose;
+        //m_updatePose = updatePose;
         m_driver = driver;
         addRequirements(shooter, turret);
     }
 
-    public SmartShooter(Shooter shooter, Turret turret, SwerveSubsystem drive, boolean updatePose) {
+    public SmartShooter(Shooter shooter, Turret turret, SwerveSubsystem drive) {
         m_shooter = shooter;
         m_turret = turret;
         m_drive = drive;
-        m_updatePose = updatePose;
+        //m_updatePose = updatePose;
         m_driver = new XboxController(4);
         addRequirements(shooter, turret);
     }
@@ -82,7 +78,7 @@ public class SmartShooter extends Command {
 
         SmartDashboard.putNumber("Fixed Time", shotTime);
 
-        Translation2d movingGoalLocation = new Translation2d();
+        Translation2d movingGoalLocation = target; //prev== Translation2d movingGoalLocation = new Translation2d();
 
         for(int i=0;i<5;i++){
 
@@ -120,14 +116,14 @@ public class SmartShooter extends Command {
 
         m_turret.aimAtGoal(m_drive.getPose(), movingGoalLocation, false);
 
-        if (SmartDashboard.getBoolean("Adjust Shot?", false)) {
+        if (m_turret.atDesiredAngle()) {
             m_shooter.run(m_rpmTable.getOutput(newDist) + SmartDashboard.getNumber("SetShotAdjust", 0));
         } else {
             m_shooter.run(m_rpmTable.getOutput(newDist));
         }
 
-        if (currentTime > 0.250 && Limelight.valid() && Limelight.getDistance() >= 85.0) {
-            double dL = Limelight.getDistance() * 0.0254;
+        /*if (currentTime > 0.250 && Limelight.valid() && Limelight.getDistance() >= 85.0) {
+            double dL = m_drive.getDistanceToHub(); //Limelight.getDistance() * 0.0254
             double tR = m_drive.getGyro().getRadians();
             double tT = m_turret.getMeasurement() - Math.PI;
             double tL = -1.0 * Limelight.tx();
@@ -138,7 +134,7 @@ public class SmartShooter extends Command {
                 m_drive.setPose(pose);
             }
 
-        }
+        }*/
 
         if (m_turret.closeToDeadzone()) {
             m_driver.setRumble(RumbleType.kLeftRumble, 1.0);
@@ -155,18 +151,18 @@ public class SmartShooter extends Command {
         SmartDashboard.putBoolean("Shooter Running", false);
         m_turret.trackTarget(false);
         m_turret.stop();
-        m_shooter.stop();
+        m_shooter.stopCommand();
         m_timer.stop();
         m_driver.setRumble(RumbleType.kLeftRumble, 0.0);
         m_driver.setRumble(RumbleType.kRightRumble, 0.0);
     }
 
-    private Pose2d calcPoseFromVision(double dL, double tR, double tT, double tL, Translation2d goal) {
+    /*private Pose2d calcPoseFromVision(double dL, double tR, double tT, double tL, Translation2d goal) {
         double tG = tR + tT + tL;
         double rX = goal.getX() - dL * Math.cos(tG);
         double rY = goal.getY() - dL * Math.sin(tG);
 
         return new Pose2d(rX, rY, new Rotation2d(-tR));
-    }
+    }*/
 
 }

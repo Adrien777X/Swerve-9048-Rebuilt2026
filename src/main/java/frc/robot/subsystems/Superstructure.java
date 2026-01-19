@@ -67,7 +67,7 @@ public class Superstructure extends SubsystemBase {
    */
   public Command stopAllCommand() {
     return Commands.parallel(
-        shooter.stop().asProxy(),
+        shooter.stopCommand().asProxy(),
         turret.set(0).asProxy()).withName("Superstructure.stopAll");
   }
 
@@ -268,7 +268,7 @@ public class Superstructure extends SubsystemBase {
    * Command to stop shooting - stops shooter.
    */
   public Command stopShootingCommand() {
-    return shooter.stop().withName("Superstructure.stopShooting");
+    return shooter.stopCommand().withName("Superstructure.stopShooting");
   }
 
   // Re-zero intake pivot if needed

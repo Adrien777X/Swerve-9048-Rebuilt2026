@@ -28,7 +28,7 @@ public final class Constants {
   public static final double MAX_SPEED = Units.feetToMeters(15);
 
   public static final class GoalConstants {
-    public static final Translation2d kGoalLocation = new Translation2d(4.115, 4.115);
+    public static final Translation2d kGoalLocation = new Translation2d(4.031, 4.115);
     public static final Translation2d kWrongBallGoal = new Translation2d(3.00, 4.115);
     //public static final Translation2d kHangerLocation = new Translation2d(2.00, 6.00);
 

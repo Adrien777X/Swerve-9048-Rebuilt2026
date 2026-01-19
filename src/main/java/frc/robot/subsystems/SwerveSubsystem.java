@@ -53,6 +53,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Config;
 import frc.robot.Constants;
+import frc.robot.LimelightHelpers;
 import frc.robot.Constants.GlobalConstants;
 import frc.robot.util.FieldRelativeAccel;
 import frc.robot.util.FieldRelativeSpeed;
@@ -67,7 +68,6 @@ import limelight.networktables.PoseEstimate;
 import swervelib.SwerveController;
 import swervelib.SwerveDrive;
 import swervelib.SwerveDriveTest;
-import swervelib.imu.Pigeon2Swerve;
 import swervelib.imu.SwerveIMU;
 import swervelib.math.SwerveMath;
 import swervelib.parser.SwerveDriveConfiguration;
@@ -234,7 +234,9 @@ public class SwerveSubsystem extends SubsystemBase {
 	// swerveDrive.updateOdometry(); // TODO: see if this is needed
 
     if (IS_LIMELIGHT_ENABLED) {
-      // Get MegaTag2 pose
+
+	  LimelightHelpers.SetRobotOrientation("limelight", swerveDrive.getYaw().getDegrees(), 0, 0, 0, 0, 0);
+	  // Get MegaTag2 pose
       Optional<PoseEstimate> visionEstimate = poseEstimator.getPoseEstimate();
 
       // If the pose is present

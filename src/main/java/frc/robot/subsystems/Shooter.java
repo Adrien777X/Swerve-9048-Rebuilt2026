@@ -9,6 +9,7 @@ import static edu.wpi.first.units.Units.Pounds;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
 
 import java.util.Map;
+import java.util.Optional;
 
 import com.revrobotics.RelativeEncoder;
 
@@ -17,6 +18,7 @@ import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
 import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -96,15 +98,15 @@ public class Shooter extends SubsystemBase {
     }
 
     public Command shootAtDistance(double distanceMeters) {
-        return run(() -> {
+        return runOnce(() -> {
         temp_distance = SHOOTING_SPEED_BY_DISTANCE.get(distanceMeters);
 
         shooter.setSpeed(RotationsPerSecond.of(temp_distance));
         });
     }
 
-    public Command stop() {
-        return shooter.setSpeed(RotationsPerSecond.of(0));
+    public Command stopCommand() {
+        return runOnce(() -> shooter.setSpeed(RotationsPerSecond.of(0)));
     }
 
     @Override
@@ -115,12 +117,13 @@ public class Shooter extends SubsystemBase {
 
     }
 
-    public boolean atSetpoint() {
-        return m_PID.atSetpoint();
+    public Optional<Angle> atSetpoint() {
+        return shooter.getMechanismSetpoint();
     }
-    // m / rps
+
+    //test feature, will not be used, only smarshooter will be used
     private static final InterpolatingDoubleTreeMap SHOOTING_SPEED_BY_DISTANCE = InterpolatingDoubleTreeMap.ofEntries(
       Map.entry(2.63, 0.55),
       Map.entry(3.4, 0.6),
-      Map.entry(4.83, 0.69));
+      Map.entry(4.00, 0.69));
 }

@@ -18,6 +18,7 @@ import edu.wpi.first.math.controller.ArmFeedforward;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -127,6 +128,20 @@ public class Turret extends SubsystemBase {
       return false;
     }
   }*/
+
+  /* MANUAL CONTROL FOR TESTING *********************
+  public void manualTurret(XboxController controller){
+    double speed = MathUtil.applyDeadband(controller.getRawAxis(4), 0.15);
+    if(turret.getAngle().in(Degrees) >= MAX_ONE_DIR_FOV - 5 && speed > 0)
+      stop();
+
+    else if(turret.getAngle().in(Degrees) <= -MAX_ONE_DIR_FOV + 5 && speed < 0)
+      stop();
+    
+    else
+      turret.set(speed);
+  }*/
+
 
   public boolean atDesiredAngle() {
     return Math.abs(m_desiredAngleRad - turret.getAngle().in(Radians)) <= TurretConstants.kTolerance;

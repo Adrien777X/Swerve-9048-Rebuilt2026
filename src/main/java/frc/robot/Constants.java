@@ -34,6 +34,8 @@ public final class Constants {
 
   }
 
+  
+
   public static final class GlobalConstants {
     public static final double kVoltCompensation = 12.6; // Sets a voltage compensation value ideally 12.6V
     public static final int PCHID = 20;
@@ -177,5 +179,11 @@ public final class Constants {
     public static final double kTargetCenterHeightFromLens = 81.0; //Center Height of the target in inches above the lens
 
     public static final double kTrackTolerance = 0.02000; //Allowable limelight angle error in radians
+  }
+
+  public static boolean disableHAL = false;
+
+  public static void disableHAL() {
+    disableHAL = true;
   }
 }
